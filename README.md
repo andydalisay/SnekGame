@@ -1,4 +1,5 @@
 # SnekGame
-snake game for microhack challenge
 
-run PEKMAN.SLN
+TEAM NOODLE
+- snake game 
+- pekman ascii console game
