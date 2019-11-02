@@ -1,0 +1,312 @@
+<!-- Lets make a simple snake game -->
+<!-- Based on original code created by thecodeplayer.com -->
+<body>
+<h1> .</h1>
+
+
+<h1>SNEK</h1>
+<p>by Team Noodle</p>
+<button onclick="init()">START</button>
+<p> </p>
+<head>
+<link href='https://fonts.googleapis.com/css?family=Press Start 2P' rel='stylesheet'>
+
+<!-- CSS -->
+<style>
+body {
+	background-image: url("backgrnd7.jpg.jfif");
+	background-color: #cccccc;
+	background-repeat: no-repeat; 
+	background-size: cover;
+	}
+h1 {
+  font-family: 'Press Start 2P';font-size: 100px;
+  text-align: center;
+}
+p {
+  font-family: 'Press Start 2P';font-size: 22px;
+  text-align: center;
+}
+button {
+	box-shadow: 0px 1px 0px 0px #1c1b18;
+	background:linear-gradient(to bottom, #eae0c2 5%, #ccc2a6 100%);
+	background-color:#eae0c2;
+	border-radius:15px;
+	border:2px solid #333029;
+	display:inline-block;
+	cursor:pointer;
+	color:#505739;
+	font-family: 'Press Start 2P';font-size: 22px;
+	font-size:14px;
+	font-weight:bold;
+	padding:12px 16px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #ffffff;
+	display: block;
+	max-width: 300px;
+	margin: auto;
+}
+button:hover {
+	background:linear-gradient(to bottom, #ccc2a6 5%, #eae0c2 100%);
+	background-color:#ccc2a6;
+}
+button:active {
+	position:relative;
+	top:1px;
+}
+
+canvas {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 400px;
+}
+</style>
+</head>
+</body>
+
+<!-- create a canvas element for the code to manipulate -->
+<canvas id="canvas" width="300" height="300"></canvas>
+  
+
+
+
+
+<!-- And our snake code -->
+<script src="snakecoreCOPY.js"></script>
+
+<script>
+	//creates the snake ready for the start of the game
+	function create_snake()
+	{
+		snake_array = []; //Empty array to start with
+		
+		snake_array[0] = {x: 6, y:0}; //position 0 in the array is the head of the snake
+		snake_array[1] = {x: 5, y:0};
+		snake_array[2] = {x: 4, y:0};
+		snake_array[3] = {x: 3, y:0};
+		snake_array[4] = {x: 2, y:0};
+	}
+	//set it so that when the user hits a key the keystroke function is called
+	document.onkeydown = keystroke
+	function keystroke(evt)
+	{
+		//TODO: fix this so that it changes the value of direction according to the key
+		//Keycodes for arrow keys: left=37, up=38, right=39, down=40
+		//Keycodes for wasd: a=65, w=87, d=68, s=83
+		//E.g. evt.keyCode==37 is true if the left arrow key was pressed
+		
+		if(evt.keyCode==37) d = "left";
+		else if(evt.keyCode==38) d = "up";
+		else if(evt.keyCode==39) d = "right";
+		else if(evt.keyCode==40) d = "down";
+		
+		if(evt.keyCode==65) d = "left";
+		else if(evt.keyCode==87) d = "up";
+		else if(evt.keyCode==68) d = "right";
+		else if(evt.keyCode==83) d = "down";
+	}
+	//The movement code for the snake, including eating food, and checking for crashes
+	function update_snake(direction)
+	{
+		//We need to calculate the x position and y position of the new head
+		//First get the current position of the head of the snake
+		var nx = snake_array[0].x;
+		var ny = snake_array[0].y;
+		
+		//Now adjust these values according to the direction of travel
+		if(direction == "right") nx++;
+		else if(direction == "left") nx--;
+		else if(direction == "up") ny--;
+		else if(direction == "down") ny++;
+		//nx and ny now contain the new x and new y positions of the head
+		//Now check for game over conditions
+		//This will restart the game if the snake hits the wall or its own body
+		if(check_collision(nx, ny, snake_array))
+		{
+			if (score > highScore) {
+				highScore = score;
+				setCookie("highScore", score, 2);
+			}
+			canvas.context.fillText("Game Over", 124, 150);
+			canvas.context.fillText("Your score: " + score, 110, 162);
+			canvas.context.fillText("Highest score: " + getCookie("highScore"), 100, 174);
+			
+			//restart game
+			//init();
+			return;
+		}
+		
+		var newhead = {x: nx, y: ny};
+		snake_array.unshift(newhead); 
+		snake_array.pop();
+
+		//Eat food____________________________________________________________
+		if(nx == food.x && ny == food.y)
+		{
+			var tail = {x: nx, y: ny};
+			score++;
+			//Create new food
+			create_food();
+			console.log(snake_array.length);
+			
+		}
+		else
+		{
+			var tail = snake_array.pop(); //pops out the last cell
+			tail.x = nx; tail.y = ny;
+		}
+		//The snake can now eat the food.
+		snake_array.unshift(tail); //pops out the last cell (the end of the tail)
+		
+		for(var i = 0; i < snake_array.length; i++)
+		{
+			var c = snake_array[i];
+			//Lets paint 10px wide cells
+			paint_cell(c.x, c.y);
+		}
+				
+		
+		//Lets paint the food
+		paint_cell(food.x, food.y);
+
+		//Lets paint the score
+		var score_text = "Score: " + score;
+		canvas.context.fillText(score_text, 5, canvas.height-5);
+		
+		//Portal___________________________________________________________________
+		if (nx == portalA.x && ny == portalA.y)
+		{
+			console.log("Test");
+			//go out portal B
+			var portalTemp_x = portalB.x;
+			var portalTemp_y = portalB.y;
+			
+			for(var i = 0; i < snake_array.length; i++)
+			{
+				snake_array[i] = {x: portalTemp_x, y: portalTemp_y};
+			}
+		}
+		if (nx == portalB.x && ny == portalB.y)
+		{
+			console.log("Test");
+			//go out portal A
+			portalTemp_x = portalA.x;
+			portalTemp_y = portalA.y;
+			
+			for(var i = 0; i < snake_array.length; i++)
+			{
+				snake_array[i] = {x: portalTemp_x, y: portalTemp_y};
+			}
+		}
+		
+		if (nx == portalC.x && ny == portalC.y)
+		{
+			console.log("Test");
+			//go out portal D
+			var portalTemp_x = portalD.x;
+			var portalTemp_y = portalD.y;
+			
+			for(var i = 0; i < snake_array.length; i++)
+			{
+				snake_array[i] = {x: portalTemp_x, y: portalTemp_y};
+			}
+		}
+		if (nx == portalD.x && ny == portalD.y)
+		{
+			console.log("Test");
+			//go out portal C
+			portalTemp_x = portalC.x;
+			portalTemp_y = portalC.y;
+			
+			for(var i = 0; i < snake_array.length; i++)
+			{
+				snake_array[i] = {x: portalTemp_x, y: portalTemp_y};
+			}
+		}
+		if (nx == portalE.x && ny == portalE.y)
+		{
+			console.log("Test");
+			//go out portal F
+			var portalTemp_x = portalF.x;
+			var portalTemp_y = portalF.y;
+			
+			for(var i = 0; i < snake_array.length; i++)
+			{
+				snake_array[i] = {x: portalTemp_x, y: portalTemp_y};
+			}
+		}
+		if (nx == portalF.x && ny == portalF.y)
+		{
+			console.log("Test");
+			//go out portal E
+			portalTemp_x = portalE.x;
+			portalTemp_y = portalE.y;
+			
+			for(var i = 0; i < snake_array.length; i++)
+			{
+				snake_array[i] = {x: portalTemp_x, y: portalTemp_y};
+			}
+		}
+		
+	}
+	
+	
+	//Lets create the food now
+	function create_food()
+	{
+		//TODO: set the food to a random position: x= 0 to maxx, y=0 to maxy
+		//Math.random() generates a random number between 0 and 1
+		//Math.round(number) rounds the number to the nearest integer
+		//The coordinates need to be integers between 0,maxx and 0,maxy
+		food = {
+			x: Math.round(Math.random()* (maxx-2)), 
+			y: Math.round(Math.random()* (maxy-2)), 
+		};
+		console.log(food);
+	}
+	
+		
+	//returns true if the snake has hit a wall (this is easy to get wrong by one cell so test your solution)
+	//or if it has hit itself (x and y exist in the array)
+	function check_collision(x, y, array)
+	{
+		//TODO: fix this function so that it checks for collisions properly
+		for (var i = 0; i < array.length;i++){
+			if(array[i].x == x && array[i].y == y)
+				var hitItself = true;
+		}
+		
+		if(x == -1 || x == maxx || y == -1 || y == maxy || hitItself == true) 
+			return true;
+		else
+			return false;
+	}
+	
+	function setCookie(cname, cvalue, exdays) {
+		var d = new Date();
+		d.setTime(d.getTime() + (exdays*24*60*60*1000));
+		var expires = "expires="+ d.toUTCString();
+		document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+	}
+	
+	function getCookie(cname) {
+		var name = cname + "=";
+		var decodedCookie = decodeURIComponent(document.cookie);
+		var ca = decodedCookie.split(';');
+		for(var i = 0; i <ca.length; i++) {
+			var c = ca[i];
+			while (c.charAt(0) == ' ') {
+				c = c.substring(1);
+			}
+			if (c.indexOf(name) == 0) {
+				return c.substring(name.length, c.length);
+			}
+		}
+		return "";
+	}
+	
+
+</script>
